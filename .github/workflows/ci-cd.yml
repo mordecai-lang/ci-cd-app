@@ -1,8 +1,8 @@
 name: CI/CD pipeline test
   on:
-    push:
-      branches: ["main"]
-    workflow_dispatch:
+   push:
+     branches: ["main"]
+   workflow_dispatch:
 
   jobs:
     build-and-push:
@@ -13,9 +13,9 @@ name: CI/CD pipeline test
 
         -name: Log In To DockerHub
           uses: docker/login-action@v2
-          with:
-            username: ${{ secret.DOCKER_USERNAME }}
-            password: ${{ secret.DOCKER_PASSWORD }}
+            with:
+              username: ${{ secret.DOCKER_USERNAME }}
+              password: ${{ secret.DOCKER_PASSWORD }}
 
         -name: Image tag
           id: vars
@@ -43,11 +43,12 @@ name: CI/CD pipeline test
             fi
 
         -name: Inspect docker health
-          run: |
+          run:
             docker inspect --format='{{json.State.Health}}' testapp
 
         -name: Clean up
-          docker rm -f testapp
+          run: |
+                docker rm -f testapp
 
         -name:  Push Image
           run: |
@@ -59,7 +60,6 @@ name: CI/CD pipeline test
       runs-on: ubuntu-latest
       needs: build-and-push
       steps:
-
         -name: Deploy to server
           uses: appleboy/ssh-action@v0.1.10
           with:
@@ -83,7 +83,7 @@ name: CI/CD pipeline test
               docker logs flaskapp
             fi
         -name: Healthcheck JSON
-          run |
+          run: |
             curl -s http://${{ secret.HOST_SERVER }}:5000/health | grep '"status":"healthy"'
 
 
