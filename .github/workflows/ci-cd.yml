@@ -30,7 +30,7 @@ jobs:
 
       - name: Run container
         run: |
-          docker run -d --name testapp -p 5000:5000 $IMAGE:latest
+          docker run -d --name testapp -p 5002:5000 $IMAGE:latest
           sleep 5
 
       - name: Healthcheck
@@ -70,7 +70,7 @@ jobs:
             docker pull mordecai-lang/myapp:${{ needs.build-and-push.outputs.TAG_SHA }}
             docker stop myapp || true
             docker rm myapp || true
-            docker run -d --name myapp -p 5000:5000 mordecai-lang/myapp:${{ needs.build-and-push.outputs.TAG_SHA }}
+            docker run -d --name myapp -p 5003:5000 mordecai-lang/myapp:${{ needs.build-and-push.outputs.TAG_SHA }}
 
       - name: Health check 200 OK (remote)
         run: |
