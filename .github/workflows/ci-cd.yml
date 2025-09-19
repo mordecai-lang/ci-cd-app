@@ -68,10 +68,8 @@ jobs:
 
       - name: Pull the exact image built earlier
         run: |
-          IMAGE=${{ needs.build-and-push.outputs.IMAGE }}
-          TAG=${{ needs.build-and-push.outputs.TAG_SHA }}
-          echo "Deploying image: $IMAGE:$TAG"
-          docker pull $IMAGE:$TAG
+          echo "Deploying image: ${{ needs.build-and-push.outputs.IMAGE}}:{{ needs.build-and-push.outputs.TAG_SHA}}"
+          docker pull ${{ needs.build-and-push.outputs.IMAGE}}:{{ needs.build-and-push.outputs.TAG_SHA}}
 
       - name: Deploy container (run the pulled image)
         run: |
