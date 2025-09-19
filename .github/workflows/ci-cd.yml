@@ -1,4 +1,4 @@
-name: CI/CD pipeline testing
+-name: CI/CD pipeline testing
 
 on:
   push:
@@ -74,7 +74,7 @@ jobs:
         run: |
           docker stop flask-app || true
           docker rm flask-app || true
-          docker run -d -p 5003:5000 --name flask-app $IMAGE:$TAG
+          docker run -d -p 5003:5000 --name flask-app ${{ needs.build-and-push.outputs.IMAGE }}:${{ needs.build-and-push.outputs.TAG_SHA }}
 
       - name: Health check 200 OK (remote)
         run: |
