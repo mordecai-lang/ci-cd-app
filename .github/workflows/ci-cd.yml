@@ -72,10 +72,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Debug: show outputs
-        run: |
-          echo "needs.build-and-push.outputs.image = '${{ needs.build-and-push.outputs.image }}'"
-          echo "needs.build-and-push.outputs.tag_sha = '${{ needs.build-and-push.outputs.tag_sha }}'"
+
 
       - name: Pull the built image
         run: |
