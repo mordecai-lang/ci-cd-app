@@ -1,4 +1,4 @@
-name: CI/CD line tes
+name: CI/CD Pipeline
 
 on:
   push:
@@ -8,9 +8,10 @@ on:
 jobs:
   build-and-push:
     runs-on: self-hosted
+    # expose job outputs to other jobs
     outputs:
-      IMAGE: ${{ steps.vars.outputs.image }}
-      TAG_SHA: ${{ steps.vars.outputs.tag_sha }}
+      image: ${{ steps.vars.outputs.image }}
+      tag_sha: ${{ steps.vars.outputs.tag_sha }}
 
     steps:
       - name: Checkout repo
@@ -26,23 +27,24 @@ jobs:
         id: vars
         run: |
           IMAGE="${{ secrets.DOCKER_USERNAME }}/myapp"
-          TAG_SHA="${GITHUB_SHA::7}"
-          echo "IMAGE=$IMAGE"
-          echo "TAG_SHA=$TAG_SHA"
+          TAG_SHA=$(echo "${GITHUB_SHA}" | cut -c1-7)
 
-          echo "image=$IMAGE" >> GITHUB_OUTPUT
-          echo "tag_sha=$TAG_SHA" >> GITHUB_OUTPUT
+          echo "IMAGE=$IMAGE" >> $GITHUB_ENV
+          echo "TAG_SHA=$TAG_SHA" >> $GITHUB_ENV
 
-      - name: Build Image
+          echo "image=$IMAGE" >> $GITHUB_OUTPUT
+          echo "tag_sha=$TAG_SHA" >> $GITHUB_OUTPUT
+
+      - name: Build Docker Image
         run: |
           docker build -t $IMAGE:latest -t $IMAGE:$TAG_SHA .
 
-      - name: Run container
+      - name: Run container (test locally)
         run: |
           docker run -d --name testapp -p 5004:5000 $IMAGE:latest
           sleep 5
 
-      - name: Healthcheck
+      - name: Healthcheck (local)
         run: |
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5000)
           echo "Healthcheck status is $STATUS"
@@ -52,17 +54,14 @@ jobs:
             exit 1
           fi
 
-      - name: Inspect docker health
-        run: docker inspect --format='{{json .State.Health}}' testapp
+      - name: Clean up test container
+        run: docker rm -f testapp || true
 
-      - name: Clean up
-        run: |
-          docker rm -f testapp
-
-      - name: Push Image
+      - name: Push Image to DockerHub
         run: |
           docker push $IMAGE:latest
           docker push $IMAGE:$TAG_SHA
+
   deploy:
     runs-on: self-hosted
     needs: build-and-push
@@ -73,26 +72,32 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Pull the exact image built earlier
+      - name: Debug: show outputs
         run: |
-          docker pull ${{ needs.build-and-push.outputs.IMAGE }}:${{ needs.build-and-push.outputs.TAG_SHA }}
+          echo "needs.build-and-push.outputs.image = '${{ needs.build-and-push.outputs.image }}'"
+          echo "needs.build-and-push.outputs.tag_sha = '${{ needs.build-and-push.outputs.tag_sha }}'"
 
-      - name: Deploy container (run the pulled image)
+      - name: Pull the built image
+        run: |
+          echo "Pulling image: ${{ needs.build-and-push.outputs.image }}:${{ needs.build-and-push.outputs.tag_sha }}"
+          docker pull ${{ needs.build-and-push.outputs.image }}:${{ needs.build-and-push.outputs.tag_sha }}
+
+      - name: Deploy container (remote)
         run: |
           docker stop flask-app || true
           docker rm flask-app || true
-          docker run -d -p 5003:5000 --name flask-app ${{ needs.build-and-push.outputs.IMAGE }}:${{ needs.build-and-push.outputs.TAG_SHA }}
+          docker run -d -p 5003:5000 --name flask-app ${{ needs.build-and-push.outputs.image }}:${{ needs.build-and-push.outputs.tag_sha }}
 
       - name: Health check 200 OK (remote)
         run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://${{ secrets.HOST_SERVER }}:5000)
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://${{ secrets.HOST_SERVER }}:5003)
           echo "Healthcheck status is $STATUS"
-          if [ $STATUS -ne 200 ]; then
-            echo "Remote up is down"
+          if [ "$STATUS" -ne 200 ]; then
+            echo "Remote app is down!"
+            docker logs flask-app || true
             exit 1
-            docker logs flaskapp
           fi
 
-      - name: Healthcheck JSON
+      - name: Healthcheck JSON (remote)
         run: |
-          curl -s http://${{ secrets.HOST_SERVER }}:5000/health | grep '"status":"healthy"'
+          curl -s http://${{ secrets.HOST_SERVER }}:5003/health | grep '"status":"healthy"'
