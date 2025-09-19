@@ -73,8 +73,7 @@ jobs:
         run: |
           echo "Image: '${{ needs.build-and-push.outputs.image }}'"
           echo "Tag SHA: '${{ needs.build-and-push.outputs.tag_sha }}'"
-
-      - name: Deploy container (local runner, skip pull)
+     - name: Deploy container (local runner, skip pull)
         run: |
           IMAGE=${{ needs.build-and-push.outputs.image }}
           TAG=${{ needs.build-and-push.outputs.tag_sha }}
