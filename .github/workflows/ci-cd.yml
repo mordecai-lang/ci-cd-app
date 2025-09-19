@@ -27,8 +27,8 @@ jobs:
         run: |
           IMAGE="${{ secrets.DOCKER_USERNAME }}/myapp"
           TAG_SHA="${GITHUB_SHA::7}"
-          echo "IMAGE=$IMAGE" >> $GITHUB_ENV
-          echo "TAG_SHA=$TAG_SHA" >> $GITHUB_ENV
+          echo "IMAGE=$IMAGE"
+          echo "TAG_SHA=$TAG_SHA"
 
           echo "image=$IMAGE" >> GITHUB_OUTPUT
           echo "tag_sha=$TAG_SHA" >> GITHUB_OUTPUT
