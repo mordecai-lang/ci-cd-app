@@ -69,39 +69,33 @@ jobs:
     runs-on: self-hosted
     needs: build-and-push
     steps:
-      - name: Login to DockerHub (deploy)
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-      - name: Debug outputs
+      - name: Debug: show outputs
         run: |
-          echo "Image output: '${{ needs.build-and-push.outputs.image }}'"
-          echo "Tag output: '${{ needs.build-and-push.outputs.tag_sha }}'"
+          echo "Image: '${{ needs.build-and-push.outputs.image }}'"
+          echo "Tag SHA: '${{ needs.build-and-push.outputs.tag_sha }}'"
 
-
-
-      - name: Pull the built image
+      - name: Deploy container (local runner, skip pull)
         run: |
-          echo "Pulling image: ${{ needs.build-and-push.outputs.image }}:${{ needs.build-and-push.outputs.tag_sha }}"
-          docker pull ${{ needs.build-and-push.outputs.image }}:${{ needs.build-and-push.outputs.tag_sha }}
+          IMAGE=${{ needs.build-and-push.outputs.image }}
+          TAG=${{ needs.build-and-push.outputs.tag_sha }}
 
-      - name: Deploy container (remote)
-        run: |
+        # stop old container if exists
           docker stop flask-app || true
           docker rm flask-app || true
-          docker run -d -p 5003:5000 --name flask-app ${{ needs.build-and-push.outputs.image }}:${{ needs.build-and-push.outputs.tag_sha }}
 
-      - name: Health check 200 OK (remote)
+        # run new container using the built image (no pull)
+          docker run -d -p 5003:5000 --name flask-app $IMAGE:$TAG
+
+      - name: Health check 200 OK
         run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://${{ secrets.HOST_SERVER }}:5003)
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5003)
           echo "Healthcheck status is $STATUS"
           if [ "$STATUS" -ne 200 ]; then
-            echo "Remote app is down!"
+            echo "App is down!"
             docker logs flask-app || true
             exit 1
           fi
 
-      - name: Healthcheck JSON (remote)
+      - name: Healthcheck JSON
         run: |
-          curl -s http://${{ secrets.HOST_SERVER }}:5003/health | grep '"status":"healthy"'
+          curl -s http://localhost:5003/health | grep '"status":"healthy"'
