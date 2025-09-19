@@ -25,8 +25,11 @@ jobs:
       - name: Image tag
         id: vars
         run: |
-          echo "IMAGE=${{ secrets.DOCKER_USERNAME }}/myapp" >> $GITHUB_ENV
-          echo "TAG_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
+          IMAGE="${{ secrets.DOCKER_USERNAME }}/myapp"
+          TAG_SHA="${GITHUB_SHA::7}"
+          echo "IMAGE=$IMAGE" >> $GITHUB_ENV
+          echo "TAG_SHA=$TAG_SHA" >> $GITHUB_ENV
+
           echo "image=$IMAGE" >> GITHUB_OUTPUT
           echo "tag_sha=$TAG_SHA" >> GITHUB_OUTPUT
 
