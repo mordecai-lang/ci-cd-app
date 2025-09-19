@@ -8,6 +8,10 @@ on:
 jobs:
   build-and-push:
     runs-on: self-hosted
+    outputs:
+      IMAGE: ${{ steps.vars.outputs.image }}
+      TAG_SHA: ${{ steps.vars.outputs.tag_sha }}
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
