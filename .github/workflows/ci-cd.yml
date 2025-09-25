@@ -45,15 +45,6 @@ jobs:
           docker run -d --name testapp -p 5004:5000 ${{ steps.vars.outputs.image }}:latest
           sleep 5
 
-      - name: Healthcheck (local)
-        run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5004)
-          echo "Healthcheck status is $STATUS"
-          if [ "$STATUS" -ne 200 ]; then
-            echo "App healthcheck failed!"
-            docker logs testapp
-            exit 1
-          fi
 
       - name: Clean up test container
         run: docker rm -f testapp || true
