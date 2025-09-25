@@ -33,8 +33,7 @@ jobs:
 
       - name: Build Docker Image
         run: |
-          docker build -t ${{ steps.vars.outputs.image }}:latest \
-                       -t ${{ steps.vars.outputs.image }}:${{ steps.vars.outputs.tag_sha }} .
+          docker build -t ${{ steps.vars.outputs.image }}:latest -t ${{ steps.vars.outputs.image }}:${{ steps.vars.outputs.tag_sha }} .
 
       - name: Run container (test locally)
         run: |
