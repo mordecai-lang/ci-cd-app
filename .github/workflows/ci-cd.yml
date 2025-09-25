@@ -34,10 +34,12 @@ jobs:
 
           echo "image=$IMAGE" >> $GITHUB_OUTPUT
           echo "tag_sha=$TAG_SHA" >> $GITHUB_OUTPUT
+
       - name: Debug Outputs
         run: |
           echo "IMAGE from env = $IMAGE"
           echo "TAG_SHA = $TAG_SHA"
+
       - name: Build Docker Image
         run: |
           docker build -t $IMAGE:latest -t $IMAGE:$TAG_SHA .
@@ -73,7 +75,7 @@ jobs:
     - name: Show outputs
       run: |
         echo "Image: '${{ needs.build-and-push.outputs.image }}'"
-        echo "Tag SHA: '${{ needs.build-and-push.outputs.tag_sha }}'"
+        echo "Tag_sha: '${{ needs.build-and-push.outputs.tag_sha }}'"
 
     - name: Deploy container (skip pull)
       run: |
