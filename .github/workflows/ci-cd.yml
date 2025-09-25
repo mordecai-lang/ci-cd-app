@@ -68,17 +68,19 @@ jobs:
   deploy:
     runs-on: self-hosted
     needs: build-and-push
+
     steps:
       - name: Deploy container
         run: |
           IMAGE=${{ needs.build-and-push.outputs.image }}
           TAG=${{ needs.build-and-push.outputs.tag_sha }}
+
+        # always pull the fresh image from Docker Hub
           docker pull $IMAGE:$TAG
-        # stop old container if exists
+
           docker stop flask-app || true
           docker rm flask-app || true
 
-        # run new container using the built image
           docker run -d -p 5003:5000 --name flask-app $IMAGE:$TAG
 
       - name: Health check 200 OK
@@ -90,12 +92,6 @@ jobs:
             docker logs flask-app || true
             exit 1
           fi
-
-
-
-
-
-
 
 
 
