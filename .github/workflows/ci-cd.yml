@@ -1,4 +1,4 @@
-name: my fist-pipeline
+name: my pipeline
 
 on:
   push:
