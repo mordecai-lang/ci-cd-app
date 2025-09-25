@@ -68,7 +68,6 @@ jobs:
   deploy:
     runs-on: self-hosted
     needs: build-and-push
-
     steps:
       - name: Deploy container
         run: |
