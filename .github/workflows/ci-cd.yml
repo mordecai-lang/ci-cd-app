@@ -1,4 +1,4 @@
-name: CI/CD Pipe
+name: my pipeline
 
 on:
   push:
@@ -8,7 +8,6 @@ on:
 jobs:
   build-and-push:
     runs-on: self-hosted
-    # expose job outputs to other jobs
     outputs:
       image: ${{ steps.vars.outputs.image }}
       tag_sha: ${{ steps.vars.outputs.tag_sha }}
@@ -23,7 +22,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Image tag
+      - name: Set image tags
         id: vars
         run: |
           IMAGE="${{ secrets.DOCKER_USERNAME }}/myapp"
@@ -32,14 +31,10 @@ jobs:
           echo "image=$IMAGE" >> $GITHUB_OUTPUT
           echo "tag_sha=$TAG_SHA" >> $GITHUB_OUTPUT
 
-      - name: Debug Outputs
-        run: |
-          echo "IMAGE from env = $IMAGE"
-          echo "TAG_SHA = $TAG_SHA"
-
       - name: Build Docker Image
         run: |
-          docker build -t ${{ steps.vars.outputs.image }}:latest -t ${{ steps.vars.outputs.image }}:${{ steps.vars.outputs.tag_sha }} .
+          docker build -t ${{ steps.vars.outputs.image }}:latest \
+                       -t ${{ steps.vars.outputs.image }}:${{ steps.vars.outputs.tag_sha }} .
 
       - name: Run container (test locally)
         run: |
@@ -50,7 +45,7 @@ jobs:
         run: |
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5004)
           echo "Healthcheck status is $STATUS"
-          if [ $STATUS -ne 200 ]; then
+          if [ "$STATUS" -ne 200 ]; then
             echo "App healthcheck failed!"
             docker logs testapp
             exit 1
@@ -64,7 +59,6 @@ jobs:
           docker push ${{ steps.vars.outputs.image }}:latest
           docker push ${{ steps.vars.outputs.image }}:${{ steps.vars.outputs.tag_sha }}
 
-
   deploy:
     runs-on: self-hosted
     needs: build-and-push
@@ -73,10 +67,7 @@ jobs:
         run: |
           IMAGE=${{ needs.build-and-push.outputs.image }}
           TAG=${{ needs.build-and-push.outputs.tag_sha }}
-
-        # always pull the fresh image from Docker Hub
           docker pull $IMAGE:$TAG
-
           docker stop flask-app || true
           docker rm flask-app || true
 
@@ -91,7 +82,3 @@ jobs:
             docker logs flask-app || true
             exit 1
           fi
-
-
-
-
