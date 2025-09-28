@@ -24,7 +24,7 @@ jobs:
           IMAGE_TAG=${{ github.sha }}
 
           docker build -t $IMAGE_NAME:$IMAGE_TAG .
-          docker push -t $IMAGE_NAME:$IMAGE_TAG
+          docker push $IMAGE_NAME:$IMAGE_TAG
 
   deploy:
     runs-on: self-hosted
