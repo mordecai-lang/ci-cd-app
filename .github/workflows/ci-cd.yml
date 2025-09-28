@@ -20,7 +20,7 @@ jobs:
 
       - name: Build and push Docker Image
         run: |
-          IMAGE_NAME=${{ secret.DOCKER_USERNAME }}/myapp
+          IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/myapp
           IMAGE_TAG=${{ github.sha }}
 
           docker build -t $IMAGE_NAME:$IMAGE_TAG .
@@ -32,7 +32,7 @@ jobs:
     steps:
       - name: Deploy container
         run: |
-          IMAGE_NAME=${{ secret.DOCKER_USERNAME }}/myapp
+          IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/myapp
           IMAGE_TAG=${{ github.sha }}
           docker pull $IMAGE_NAME:$IMAGE_TAG
 
